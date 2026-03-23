@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NINJA BATTLE — Multiplayer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Zen+Dots&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #12121a;
+    --border: #1e1e2e;
+    --accent: #e63946;
+    --accent2: #4cc9f0;
+    --gold: #ffd166;
+    --text: #e2e2f0;
+    --muted: #6b6b8a;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Share Tech Mono', monospace;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    overflow: hidden;
+  }
+
+  /* LOBBY */
+  #lobby {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    gap: 24px;
+    padding: 40px;
+  }
+  #lobby h1 {
+    font-family: 'Zen Dots', cursive;
+    font-size: clamp(2rem, 6vw, 4rem);
+    color: var(--accent);
+    text-shadow: 0 0 40px rgba(230,57,70,0.5);
+    letter-spacing: 0.1em;
+    text-align: center;
+  }
+  #lobby h1 span { color: var(--accent2); }
+  .tagline {
+    color: var(--muted);
+    font-size: 0.85rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+  }
+  .lobby-form {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    width: 100%;
+    max-width: 340px;
+    margin-top: 16px;
+  }
+  .lobby-form label {
+    font-size: 0.7rem;
+    color: var(--muted);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 2px;
+  }
+  .lobby-form input {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 1rem;
+    padding: 10px 14px;
+    border-radius: 4px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .lobby-form input:focus { border-color: var(--accent2); }
+  .color-row {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .color-btn {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: transform 0.15s, border-color 0.15s;
+  }
+  .color-btn:hover { transform: scale(1.15); }
+  .color-btn.selected { border-color: white; transform: scale(1.15); }
+  .btn-primary {
+    background: var(--accent);
+    color: white;
+    border: none;
+    font-family: 'Zen Dots', cursive;
+    font-size: 0.9rem;
+    padding: 13px 28px;
+    border-radius: 4px;
+    cursor: pointer;
+    letter-spacing: 0.1em;
+    transition: background 0.2s, transform 0.1s;
+    margin-top: 8px;
+  }
+  .btn-primary:hover { background: #c1121f; transform: translateY(-1px); }
+  .btn-primary:active { transform: translateY(0); }
+  #status-msg {
+    color: var(--muted);
+    font-size: 0.8rem;
+    text-align: center;
+    min-height: 1.2em;
+  }
+  #status-msg.error { color: var(--accent); }
+  #status-msg.ok { color: var(--accent2); }
+
+  /* GAME */
+  #game-wrapper {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    width: 100vw;
+    height: 100vh;
+    padding: 8px;
+    gap: 6px;
+  }
+  #hud {
+    width: 100%;
+    max-width: 900px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 4px 0;
+    font-size: 0.75rem;
+    color: var(--muted);
+  }
+  #hud .room-info { color: var(--accent2); }
+  #hud .players-online { color: var(--gold); }
+  #canvas-container {
+    position: relative;
+    width: 100%;
+    max-width: 900px;
+    flex: 1;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+    background: #080810;
+  }
+  #gameCanvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    image-rendering: pixelated;
+  }
+  #controls-hint {
+    font-size: 0.65rem;
+    color: var(--muted);
+    text-align: center;
+    letter-spacing: 0.1em;
+  }
+  .ping-dot {
+    display: inline-block;
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--accent2);
+    margin-right: 5px;
+    animation: blink 2s ease-in-out infinite;
+  }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+  /* scanline overlay */
+  #game-wrapper::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+      to bottom,
+      transparent 0px,
+      transparent 3px,
+      rgba(0,0,0,0.07) 3px,
+      rgba(0,0,0,0.07) 4px
+    );
+    pointer-events: none;
+    z-index: 100;
+  }
+</style>
+</head>
+<body>
+
+<!-- LOBBY -->
+<div id="lobby">
+  <h1>NINJA<span> BATTLE</span></h1>
+  <p class="tagline">Real-time multiplayer · 2D Platformer</p>
+
+  <div class="lobby-form">
+    <div>
+      <label>Your name</label>
+      <input type="text" id="nameInput" maxlength="16" placeholder="Ninja_001" autocomplete="off"/>
+    </div>
+    <div>
+      <label>Pick a color</label>
+      <div class="color-row" id="colorPicker"></div>
+    </div>
+    <div>
+      <label>Room code (leave empty = random)</label>
+      <input type="text" id="roomInput" maxlength="12" placeholder="room-abc" autocomplete="off"/>
+    </div>
+    <button class="btn-primary" id="joinBtn">JOIN BATTLE</button>
+    <p id="status-msg"></p>
+  </div>
+</div>
+
+<!-- GAME -->
+<div id="game-wrapper">
+  <div id="hud">
+    <span><span class="ping-dot"></span><span class="room-info" id="roomDisplay">—</span></span>
+    <span class="players-online" id="playerCount">0 fighters</span>
+    <span id="myScore">score: 0</span>
+  </div>
+  <div id="canvas-container">
+    <canvas id="gameCanvas"></canvas>
+  </div>
+  <p id="controls-hint">WASD / ARROW KEYS — move &amp; jump &nbsp;|&nbsp; J / Z — attack &nbsp;|&nbsp; K / X — special &nbsp;|&nbsp; Double-jump supported</p>
+</div>
+
+<script src="game.js"></script>
+</body>
+</html>
