@@ -16,7 +16,6 @@ jobs:
         with:
           apiToken: ${{ secrets.CF_API_TOKEN }}
           accountId: ${{ secrets.CF_ACCOUNT_ID }}
-          workingDirectory: worker
 
   deploy-frontend:
     name: Deploy Frontend (Pages)
@@ -27,12 +26,11 @@ jobs:
 
       - name: Inject WS URL into game.js
         run: |
-          # Replace the WS_URL placeholder with the actual worker URL
-          sed -i "s|window.WS_URL || \`wss://\${.*}\`|'wss://${{ secrets.CF_WORKER_URL }}/ws'|g" frontend/game.js
+          sed -i "s|window.WS_URL ||.*|'wss://${{ secrets.CF_WORKER_URL }}/ws'|g" game.js
 
       - name: Deploy to Cloudflare Pages
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CF_API_TOKEN }}
           accountId: ${{ secrets.CF_ACCOUNT_ID }}
-          command: pages deploy frontend --project-name=ninja-battle
+          command: pages deploy . --project-name=ninja-battle
