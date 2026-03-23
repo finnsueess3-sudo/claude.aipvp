@@ -1,6 +1,6 @@
 # NINJA BATTLE — Multiplayer 2D Platformer
 
-Real-time multiplayer fighting game running on Cloudflare Workers + Pages.
+Real-time. multiplayer fighting game running on Cloudflare Workers + Pages.
 
 ```
 frontend/   ← HTML/CSS/JS game (hosted on Cloudflare Pages)
